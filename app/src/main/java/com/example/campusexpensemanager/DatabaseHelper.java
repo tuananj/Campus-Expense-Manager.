@@ -12,9 +12,9 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "CampusExpense.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2; // Tăng từ 1 lên 2
 
-    // Table Expenses
+    // ==================== EXPENSES TABLE ====================
     private static final String TABLE_EXPENSES = "expenses";
     private static final String COLUMN_ID = "id";
     private static final String COLUMN_AMOUNT = "amount";
@@ -24,12 +24,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_PAYMENT_METHOD = "payment_method";
     private static final String COLUMN_USERNAME = "username";
 
+    // ==================== BUDGETS TABLE ====================
+    private static final String TABLE_BUDGETS = "budgets";
+    private static final String COLUMN_BUDGET_ID = "id";
+    private static final String COLUMN_BUDGET_CATEGORY = "category";
+    private static final String COLUMN_BUDGET_AMOUNT = "budget_amount";
+    private static final String COLUMN_BUDGET_MONTH = "month";
+    private static final String COLUMN_BUDGET_YEAR = "year";
+    private static final String COLUMN_BUDGET_USERNAME = "username";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        // Tạo bảng Expenses
         String CREATE_EXPENSES_TABLE = "CREATE TABLE " + TABLE_EXPENSES + "("
                 + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                 + COLUMN_AMOUNT + " REAL,"
@@ -40,15 +50,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_USERNAME + " TEXT"
                 + ")";
         db.execSQL(CREATE_EXPENSES_TABLE);
+
+        // Tạo bảng Budgets
+        String CREATE_BUDGETS_TABLE = "CREATE TABLE " + TABLE_BUDGETS + "("
+                + COLUMN_BUDGET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + COLUMN_BUDGET_CATEGORY + " TEXT,"
+                + COLUMN_BUDGET_AMOUNT + " REAL,"
+                + COLUMN_BUDGET_MONTH + " TEXT,"
+                + COLUMN_BUDGET_YEAR + " TEXT,"
+                + COLUMN_BUDGET_USERNAME + " TEXT"
+                + ")";
+        db.execSQL(CREATE_BUDGETS_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EXPENSES);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BUDGETS);
         onCreate(db);
     }
 
-    // Thêm chi tiêu
+    // ==================== EXPENSE METHODS ====================
+
     public long addExpense(Expense expense) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -64,7 +87,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return id;
     }
 
-    // Lấy tất cả chi tiêu của user
     public List<Expense> getAllExpenses(String username) {
         List<Expense> expenseList = new ArrayList<>();
         String selectQuery = "SELECT * FROM " + TABLE_EXPENSES +
@@ -92,7 +114,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return expenseList;
     }
 
-    // Lấy một chi tiêu theo ID
     public Expense getExpense(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(TABLE_EXPENSES, null, COLUMN_ID + "=?",
@@ -115,7 +136,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return expense;
     }
 
-    // Cập nhật chi tiêu
     public int updateExpense(Expense expense) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -131,7 +151,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    // Xóa chi tiêu
     public void deleteExpense(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_EXPENSES, COLUMN_ID + " = ?",
@@ -139,7 +158,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Tính tổng chi tiêu theo tháng
     public double getTotalExpenseByMonth(String username, String month, String year) {
         double total = 0;
         String query = "SELECT SUM(" + COLUMN_AMOUNT + ") FROM " + TABLE_EXPENSES +
@@ -157,7 +175,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return total;
     }
 
-    // Lấy chi tiêu theo danh mục
     public List<Expense> getExpensesByCategory(String username, String category) {
         List<Expense> expenseList = new ArrayList<>();
         String selectQuery = "SELECT * FROM " + TABLE_EXPENSES +
@@ -183,5 +200,113 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return expenseList;
+    }
+
+    // ==================== BUDGET METHODS ====================
+
+    public long addBudget(Budget budget) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_BUDGET_CATEGORY, budget.getCategory());
+        values.put(COLUMN_BUDGET_AMOUNT, budget.getBudgetAmount());
+        values.put(COLUMN_BUDGET_MONTH, budget.getMonth());
+        values.put(COLUMN_BUDGET_YEAR, budget.getYear());
+        values.put(COLUMN_BUDGET_USERNAME, budget.getUsername());
+
+        long id = db.insert(TABLE_BUDGETS, null, values);
+        db.close();
+        return id;
+    }
+
+    public List<Budget> getAllBudgets(String username) {
+        List<Budget> budgetList = new ArrayList<>();
+        String selectQuery = "SELECT * FROM " + TABLE_BUDGETS +
+                " WHERE " + COLUMN_BUDGET_USERNAME + " = ?";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, new String[]{username});
+
+        if (cursor.moveToFirst()) {
+            do {
+                Budget budget = new Budget();
+                budget.setId(cursor.getInt(0));
+                budget.setCategory(cursor.getString(1));
+                budget.setBudgetAmount(cursor.getDouble(2));
+                budget.setMonth(cursor.getString(3));
+                budget.setYear(cursor.getString(4));
+                budget.setUsername(cursor.getString(5));
+                budgetList.add(budget);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return budgetList;
+    }
+
+    public Budget getBudgetByCategoryAndMonth(String username, String category, String month, String year) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM " + TABLE_BUDGETS +
+                " WHERE " + COLUMN_BUDGET_USERNAME + " = ? AND " +
+                COLUMN_BUDGET_CATEGORY + " = ? AND " +
+                COLUMN_BUDGET_MONTH + " = ? AND " +
+                COLUMN_BUDGET_YEAR + " = ?";
+
+        Cursor cursor = db.rawQuery(query, new String[]{username, category, month, year});
+
+        Budget budget = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            budget = new Budget();
+            budget.setId(cursor.getInt(0));
+            budget.setCategory(cursor.getString(1));
+            budget.setBudgetAmount(cursor.getDouble(2));
+            budget.setMonth(cursor.getString(3));
+            budget.setYear(cursor.getString(4));
+            budget.setUsername(cursor.getString(5));
+            cursor.close();
+        }
+
+        db.close();
+        return budget;
+    }
+
+    public int updateBudget(Budget budget) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_BUDGET_CATEGORY, budget.getCategory());
+        values.put(COLUMN_BUDGET_AMOUNT, budget.getBudgetAmount());
+        values.put(COLUMN_BUDGET_MONTH, budget.getMonth());
+        values.put(COLUMN_BUDGET_YEAR, budget.getYear());
+
+        int result = db.update(TABLE_BUDGETS, values, COLUMN_BUDGET_ID + " = ?",
+                new String[]{String.valueOf(budget.getId())});
+        db.close();
+        return result;
+    }
+
+    public void deleteBudget(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_BUDGETS, COLUMN_BUDGET_ID + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+
+    public double getTotalExpenseByCategoryAndMonth(String username, String category, String month, String year) {
+        double total = 0;
+        String query = "SELECT SUM(" + COLUMN_AMOUNT + ") FROM " + TABLE_EXPENSES +
+                " WHERE " + COLUMN_USERNAME + " = ? AND " +
+                COLUMN_CATEGORY + " = ? AND " +
+                COLUMN_DATE + " LIKE ?";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(query, new String[]{username, category, "%/" + month + "/" + year});
+
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+
+        cursor.close();
+        db.close();
+        return total;
     }
 }
