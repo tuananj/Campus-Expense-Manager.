@@ -1,7 +1,5 @@
 package com.example.campusexpensemanager;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -78,9 +76,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Kiểm tra thông tin đăng nhập (demo: admin/admin)
+        // Kiểm tra thông tin đăng nhập
         // Trong thực tế, nên kết nối với database hoặc API
-        if (username.equals("admin") && password.equals("admin")) {
+        if (username.equals("admin") && password.equals("123456")) {
             // Lưu trạng thái đăng nhập
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putBoolean(KEY_IS_LOGGED_IN, true);
