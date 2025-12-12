@@ -87,13 +87,13 @@
 
         <TextView
             android:id="@+id/tvBackToLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Đã có tài khoản? Đăng nhập"
-            android:textColor="#2196F3"
+            android:layout_width="205dp"
+            android:layout_height="60dp"
             android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:clickable="true"/>
+            android:clickable="true"
+            android:text="Đã có tài khoản? Đăng nhập"
+            android:textColor="#2196F3" />
 
     </LinearLayout>
 
